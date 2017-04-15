@@ -7,6 +7,10 @@ var lastyear=1995;
 var mode;
 var countryDisplay=-1;
 var countryTempDisplay = -1;
+var methodDisplay = -1;
+var methodTempDisplay = -1;
+var scaleMode = "Real Scale";
+
 
 function preload(){
  table_ori = loadTable("contraceptive.csv","csv","header");
@@ -17,7 +21,7 @@ function setup() {
   table = table_ori.getArray();
   colors = [color(122,11,11),color(244,102,102),color(255,149,20),color(255,239,20),color(127,121,35),
   color(141,239,117),color(3,74,173),color(132,212,155),color(114,117,142),color(224,159,252),
-  color(81,39,49),color(175,175,175),color(173,24,83),color(116,160,106),color(71,71,71)]
+  color(81,39,49),color(175,175,175),color(173,24,83),color(116,160,106),color(71,71,71), color(10)]
   angleMode(DEGREES);
   countries = {}
   for(var i = 1; i<table.length; i++){
@@ -49,29 +53,42 @@ function draw() {
   }
   }
   if (mode == "fixedYear"){
+    
+    if (methodDisplay == -1){
+    if (methodTempDisplay ==-1)
+    updateAllCountries(lastyear)
+    else
+    updateCountriesByMethods(lastyear,methodTempDisplay)
+}
+    else
+    updateCountriesByMethods(lastyear,methodDisplay)
+
     balanceCountries();
     displayAllCountries();
     drawTimeLine(lastyear);
+  
   if(countryDisplay!=-1){
   countries[countryDisplay].displayDetails(lastyear)
   }else{
   if (countryTempDisplay!=-1)
     countries[countryTempDisplay].displayDetails(lastyear)
   }
-  
   }
+  
+  
 
   
   drawTitle();
   drawMethods();
+  drawScaleMode();
   }
   
   
   function drawTitle(){
   textAlign(LEFT, CENTER)
     fill(80)
-    textSize(11)
-    text("Worldwide Contraceptive Methods",300,30 )
+    textSize(11.5)
+    text("Worldwide Family-Planning Methods",300,24 )
   }
   
   
@@ -82,8 +99,15 @@ function draw() {
   if (year == 2014)
   year = 2013
   if (year!=lastyear){
-    tempyear = year
-    updateAllCountries(year)  
+    //lastyear = year
+    if (methodDisplay == -1){
+    if (methodTempDisplay ==-1)
+    updateAllCountries(year)
+    else
+    updateCountriesByMethods(year,methodTempDisplay)
+}
+    else
+    updateCountriesByMethods(year,methodDisplay)
 }  
 
     balanceCountries();
@@ -157,9 +181,9 @@ function draw() {
   
   
   
-  function displayCountriesByMethods(methodNumber){
+  function updateCountriesByMethods(year,methodNumber){
   for(var key in countries){
-  countries[key].updateMethod(methodNumber);
+  countries[key].methodUpdate(year,methodNumber);
   }
   }
   
@@ -169,7 +193,7 @@ function drawTimeLine(year){
   noStroke();
   for(var i=1995; i<2014;i++){
   x = map(i,1995,2013,50,700)
-  y = 470
+  y = 480
   if(i==year){
     if(mode == "running")
       ellipse(x,y,10)
@@ -182,7 +206,7 @@ function drawTimeLine(year){
   }
     
   else
-    ellipse(x,470,5)
+    ellipse(x,480,5)
   textAlign(CENTER)
   textSize(10)
   text(i,x,490)  
@@ -203,44 +227,55 @@ for(var i=0; i<15; i++){
 }
 
 function mouseClicked(){
-y = checkTimeLines();
-if(y!=-1){
+Yy = checkTimeLines();
+
+if(Yy!=-1){
 if(mode == "running"){
 mode = "fixedYear";
-updateAllCountries(y);
-lastyear = y;
+lastyear = Yy;
 }
-else if(mode == "fixedYear" && y==lastyear){
+else if(Yy==lastyear){
 mode = "running";
 }
-else if(mode == "fixedYear" && y!=lastyear){
-updateAllCountries(y);
-lastyear = y;
+else{
+lastyear = Yy;
 }
 }
 
-c = checkCountries()
+c = checkCountries();
+m = checkMethods();
+s = scaleHovered();
+
 if(countryDisplay == c)
 countryDisplay = -1
-else
+else if(m==-1&& !s&&Yy==-1)
 countryDisplay = c
 
 
+if (m!=-1){
+methodDisplay = m}
+else if(c==-1&&!s&&Yy==-1)
+methodDisplay =m
 
+
+if (s){
+if (scaleMode == "Real Scale")
+  scaleMode = "Smart Scale"
+else if (scaleMode =="Smart Scale")
+  scaleMode = "Percentage Only"
+else
+  scaleMode = "Real Scale"
+}
 
 }
 
 function mouseMoved(){
-y = checkTimeLines();
-if(y!=-1){
-  x = map(y,1995,2013,50,700)
-  y = 470
-  fill(255)
-  ellipse(x,y,10);
-}
 
 c = checkCountries()
 countryTempDisplay = c
+
+m = checkMethods();
+methodTempDisplay = m
 
 }
 
@@ -253,14 +288,50 @@ return -1
   
 }
 
+function checkMethods(){
+for(var i=0; i<15; i++){
+ y = map(i,0,16,40,350)
+ x = 800
+ R = sqrt(sq(mouseX-x)+sq(mouseY-y))
+ if(R<6)
+ return i 
+}
+return -1
+}
 
 
 function checkTimeLines(){
   for(var i=1995; i<2014;i++){
   x = map(i,1995,2013,50,700)
-  y = 470
+  y = 480
   if (sqrt(sq(mouseX-x)+sq(mouseY-y))<10){
   return i}
 }
 return -1
 }
+
+function scaleHovered(){
+if (mouseX<900 && mouseX> 810 && mouseY<30 && mouseY>9){
+  return true
+}
+return false
+}
+
+function drawScaleMode(){
+if (scaleHovered())
+  fill(128)
+else
+  fill(200)
+  
+noStroke()
+rect(815,10,80,15,2)
+if (scaleHovered()){
+fill(250)
+}
+else
+fill(40)
+textAlign(CENTER,TOP)
+
+text(scaleMode,855,11)
+}
+
